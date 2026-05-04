@@ -146,7 +146,7 @@ button:hover{filter:brightness(1.14)}.sec{background:linear-gradient(135deg,#272
 <div id="modal" class="modalbg">
  <div class="modal">
   <h1>Выбери тайного врага</h1>
-  <p class="sub">Соперник этого не видит. Тайный персонаж стоит 120 очков, и его съедение сразу завершает игру.</p>
+  <p class="sub">Соперник этого не видит. Тайный персонаж стоит 120 очков, и победа над ним сразу завершает игру.</p>
   <div id="choose" class="select"></div>
   <button id="start">Начать игру</button>
  </div>
@@ -174,7 +174,7 @@ button:hover{filter:brightness(1.14)}.sec{background:linear-gradient(135deg,#272
    <li>Дракон ходит и ест фигуры соперника по всем направлениям на 1 клетку.</li>
    <li>Персонаж ходит и ест фигуры соперника по всем направлениям на 1 или 2 клетки, если путь свободен.</li>
    <li>Очки: дракон — 5, обычный персонаж — 10, тайный персонаж — 120.</li>
-   <li>Победа: съесть тайного персонажа соперника.</li>
+   <li>Победа: тайный персонаж соперника повержен.</li>
    <li>Победа прорывом: если все оставшиеся фигуры игрока достигли противоположной стороны доски, игрок получает 120 очков и выигрывает.</li>
   </ul></div>
   <div class="legend"><h2>Фигуры</h2><div id="legend" class="grid"></div></div>
@@ -357,11 +357,11 @@ function doMove(m){
  const secret=t&&t.t===(t.o===H?hSecret:aSecret);
  b[m.tr][m.tc]=p;b[m.fr][m.fc]=null;
  if(t){if(p.o===H)hScore+=v;else aScore+=v}
- addLog(`${moveNo}. ${p.o===H?"Игрок":"ИИ"}: ${coord(m.fr,m.fc)} → ${coord(m.tr,m.tc)} — ${t?`съел ${name(t.t)} за ${v}`:"сходил"}`);
+ addLog(`${moveNo}. ${p.o===H?"Игрок":"ИИ"}: ${coord(m.fr,m.fc)} → ${coord(m.tr,m.tc)} — ${t?`победил ${name(t.t)} за ${v}`:"сходил"}`);
  if(p.o===A)moveNo++;
  sel=null;legal=[];draw();
  if(secret){
-  end(p.o,p.o===H?`Ты съел тайного персонажа ИИ: ${name(aSecret)}.`:`ИИ съел твоего тайного персонажа: ${name(hSecret)}.`);
+  end(p.o,p.o===H?`Ты победил тайного персонажа ИИ: ${name(aSecret)}.`:`ИИ победил твоего тайного персонажа: ${name(hSecret)}.`);
   return;
  }
  if(allOnOppositeSide(p.o)){
