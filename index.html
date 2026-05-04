@@ -961,6 +961,86 @@ button, .card, .cell {
   overflow: auto;
 }
 
+
+/* === Rules visibility fix v12 === */
+@media (max-width: 950px) {
+  .side {
+    grid-template-rows: auto auto auto minmax(80px, .75fr) minmax(0, 1fr);
+  }
+
+  .rules {
+    display: block !important;
+    margin-top: 0;
+    max-height: 18dvh;
+    min-height: 74px;
+    overflow: auto;
+    font-size: 10.5px;
+    line-height: 1.25;
+    padding: 7px;
+  }
+
+  .rules h2 {
+    font-size: 13px;
+    margin-bottom: 4px;
+  }
+
+  .rules ul {
+    margin: 0;
+    padding-left: 15px;
+  }
+
+  .legend {
+    display: none !important;
+  }
+
+  .log {
+    min-height: 50px;
+  }
+}
+
+@media (max-width: 700px) {
+  .rules {
+    max-height: 15dvh;
+    min-height: 62px;
+    font-size: 9.8px;
+  }
+}
+
+@media (max-width: 420px) {
+  .rules {
+    max-height: 14dvh;
+    min-height: 56px;
+    font-size: 9px;
+    padding: 6px;
+  }
+}
+
+@media (max-height: 650px) and (orientation: landscape) {
+  .side {
+    grid-template-rows: auto auto auto minmax(60px, .7fr) minmax(0, 1fr);
+  }
+
+  .rules {
+    display: block !important;
+    max-height: 18dvh;
+    min-height: 52px;
+    overflow: auto;
+    font-size: 9px;
+    line-height: 1.18;
+    padding: 6px;
+    margin-top: 4px;
+  }
+
+  .rules h2 {
+    font-size: 12px;
+    margin-bottom: 3px;
+  }
+
+  .legend {
+    display: none !important;
+  }
+}
+
 </style>
 </head>
 <body>
