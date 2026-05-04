@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Твой тайный враг</title>
+<style>
+:root{
+ --ink:#f8fafc;--muted:#a7adba;--gold:#d6ad55;--gold2:#f7e4a6;--blood:#7f1d1d;
+}
+*{box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{
+ margin:0;
+ min-height:100vh;
+ font-family:Georgia,"Times New Roman",serif;
+ color:var(--ink);
+ padding:clamp(6px,1.4vmin,16px);
+ display:flex;
+ justify-content:center;
+ align-items:flex-start;
+ background:
+  radial-gradient(circle at 50% -12%,rgba(214,173,85,.20),transparent 28%),
+  radial-gradient(circle at 8% 88%,rgba(59,130,246,.12),transparent 30%),
+  radial-gradient(circle at 92% 72%,rgba(127,29,29,.24),transparent 33%),
+  linear-gradient(135deg,#030304,#101017 52%,#050406);
+}
+.app{
+ width:min(1360px,100%);
+ height:calc(100vh - clamp(12px,2.8vmin,32px));
+ display:grid;
+ grid-template-columns:minmax(0,1fr) minmax(300px,420px);
+ gap:clamp(8px,1.5vmin,18px);
+ overflow:hidden;
+}
+.box{
+ min-height:0;
+ background:
+  linear-gradient(145deg,rgba(255,255,255,.045),transparent 28%),
+  linear-gradient(160deg,rgba(13,14,20,.96),rgba(25,22,26,.93));
+ border:1px solid rgba(214,173,85,.26);
+ border-radius:24px;
+ padding:clamp(9px,1.5vmin,18px);
+ box-shadow:0 0 0 1px rgba(255,255,255,.035),0 24px 80px rgba(0,0,0,.68),inset 0 0 34px rgba(214,173,85,.045);
+}
+h1{
+ margin:0 0 8px;
+ font-size:clamp(24px,4vw,42px);
+ line-height:1.02;
+ color:#f7e4a6;
+ text-shadow:0 0 22px rgba(214,173,85,.22),0 3px 8px rgba(0,0,0,.75);
+}
+h2{margin:0 0 10px;font-size:19px;color:#f7e4a6}
+.sub{margin:0 0 12px;color:var(--muted);line-height:1.38;font-family:Arial,Helvetica,sans-serif}
+.board{
+ width:min(calc(100vh - 118px),calc(100vw - 480px));
+ height:min(calc(100vh - 118px),calc(100vw - 480px));
+ min-width:320px;min-height:320px;
+ display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);
+ border:10px solid #070609;border-radius:22px;overflow:hidden;margin:auto;user-select:none;background:#09080b;
+ box-shadow:0 0 0 2px rgba(214,173,85,.38),0 0 36px rgba(214,173,85,.18),inset 0 0 26px rgba(0,0,0,.9);
+}
+.cell{position:relative;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:inset 0 0 14px rgba(0,0,0,.22)}
+.light{background:linear-gradient(145deg,rgba(255,255,255,.40),rgba(255,255,255,.08) 34%,rgba(0,0,0,.18)),radial-gradient(circle at 28% 20%,#f1eadb,#b8ad9b 52%,#7f7465)}
+.dark{background:linear-gradient(145deg,rgba(255,255,255,.08),rgba(0,0,0,.45)),radial-gradient(circle at 28% 20%,#2a2730,#100d13 58%,#050407)}
+.light:before,.dark:before{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 0 42%,rgba(214,173,85,.17) 43%,transparent 45%),radial-gradient(circle at 78% 22%,rgba(255,255,255,.12),transparent 20%);opacity:.45}
+.piece{
+ width:84%;height:84%;border-radius:20%;display:flex;align-items:center;justify-content:center;position:relative;z-index:2;overflow:hidden;
+ border:1px solid rgba(247,228,166,.46);background:#111;
+ box-shadow:inset 0 -10px 16px rgba(0,0,0,.36),inset 0 8px 12px rgba(255,255,255,.08),0 10px 18px rgba(0,0,0,.52);
+ transition:transform .16s ease,filter .16s ease,box-shadow .16s ease;animation:breathe 3.6s ease-in-out infinite;font-size:0;
+}
+@keyframes breathe{0%,100%{filter:brightness(1)}50%{filter:brightness(1.08)}}
+.piece:hover{transform:translateY(-4px) scale(1.045);box-shadow:inset 0 -10px 16px rgba(0,0,0,.36),0 16px 26px rgba(0,0,0,.62),0 0 24px rgba(214,173,85,.22)}
+.human{background:radial-gradient(circle at 32% 18%,#ffffff,#cfd8e6 44%,#60708b 100%)}
+.ai{background:radial-gradient(circle at 32% 18%,#64232b,#151018 48%,#030204 100%);border-color:rgba(127,29,29,.58)}
+.secret:before{content:"◆";position:absolute;top:2px;right:5px;font-size:16px;color:#f7e4a6;text-shadow:0 0 9px #d6ad55,0 1px 3px #000;z-index:5}
+.figsvg{width:96%;height:96%;display:block;filter:drop-shadow(0 8px 9px rgba(0,0,0,.48))}
+.ai .figsvg{filter:drop-shadow(0 0 8px rgba(127,29,29,.55)) drop-shadow(0 8px 9px rgba(0,0,0,.7))}
+.human .figsvg{filter:drop-shadow(0 0 8px rgba(147,197,253,.34)) drop-shadow(0 8px 9px rgba(0,0,0,.45))}
+.lab{position:absolute;bottom:2px;left:2px;right:2px;text-align:center;font-family:Arial,Helvetica,sans-serif;font-size:clamp(7px,1.2vw,10px);font-weight:800;color:#f8fafc!important;text-shadow:0 1px 3px #000!important;background:linear-gradient(90deg,transparent,rgba(0,0,0,.46),transparent);z-index:5;pointer-events:none}
+.human .lab{color:#111827!important;text-shadow:0 1px 2px rgba(255,255,255,.85)!important}
+.sel{box-shadow:inset 0 0 0 5px rgba(247,228,166,.94),inset 0 0 24px rgba(214,173,85,.45)!important}
+.mv:before,.cap:before{
+ content:"";
+ position:absolute;
+ z-index:1;
+ width:46%;
+ height:46%;
+ left:50%;
+ top:50%;
+ transform:translate(-50%,-50%) rotate(45deg);
+ border:2px solid #fff8dc;
+ animation:hintPulse 1.05s ease-in-out infinite;
+}
+@keyframes hintPulse{
+ 0%,100%{opacity:.92;filter:brightness(1);transform:translate(-50%,-50%) rotate(45deg) scale(1)}
+ 50%{opacity:1;filter:brightness(1.55);transform:translate(-50%,-50%) rotate(45deg) scale(1.16)}
+}
+.mv:before{
+ background:radial-gradient(circle,#fffbe8 0 28%,#facc15 29% 62%,rgba(250,204,21,.45) 63%);
+ border-color:#fff8dc;
+ box-shadow:0 0 10px #fff8dc,0 0 24px #facc15,0 0 42px rgba(250,204,21,.75);
+}
+.cap:before{
+ background:radial-gradient(circle,#fff1f2 0 20%,#ef4444 21% 58%,rgba(127,29,29,.72) 59%);
+ border-color:#fff;
+ box-shadow:0 0 10px #fff,0 0 24px #ef4444,0 0 46px rgba(239,68,68,.85);
+}
+.cap{box-shadow:inset 0 0 0 5px rgba(127,29,29,.68)}
+.side{display:flex;flex-direction:column;overflow:hidden}
+.status,.rules,.legend,.log{
+ background:linear-gradient(145deg,rgba(255,255,255,.035),transparent 26%),rgba(5,6,12,.70);
+ border:1px solid rgba(214,173,85,.16);border-radius:16px;padding:12px;line-height:1.42;color:#d7deea;font-family:Arial,Helvetica,sans-serif;
+}
+.status{background:linear-gradient(145deg,rgba(214,173,85,.10),rgba(5,6,12,.74));margin-bottom:12px}
+.status strong{color:#f7e4a6}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:10px 0}
+.stat{background:linear-gradient(160deg,rgba(214,173,85,.07),rgba(5,6,12,.82));border:1px solid rgba(214,173,85,.12);border-radius:14px;padding:10px}
+.name{color:#aab4c5;font-size:12px;font-family:Arial,Helvetica,sans-serif}.val{font-size:24px;font-weight:900;margin-top:3px;color:#f7e4a6}
+button{border:1px solid rgba(247,228,166,.35);border-radius:14px;padding:11px 13px;background:linear-gradient(135deg,#8a6428,#2b1720 70%,#111018);color:#fff7d6;font-weight:900;font-size:14px;cursor:pointer;box-shadow:0 10px 24px rgba(0,0,0,.34),inset 0 1px 0 rgba(255,255,255,.12)}
+button:hover{filter:brightness(1.14)}.sec{background:linear-gradient(135deg,#272733,#0b0c12)}
+.buttons{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.rules,.legend{margin-top:12px;font-size:13px;overflow:auto}.rules{max-height:29vh}.rules ul{padding-left:18px;margin:8px 0 0}.legend{max-height:21vh}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}.item{background:rgba(255,255,255,.045);border:1px solid rgba(214,173,85,.09);padding:7px;border-radius:10px;font-size:12px;font-family:Arial,Helvetica,sans-serif}.item svg{width:28px;height:28px;vertical-align:middle}
+.log{margin-top:12px;flex:1;min-height:70px;max-height:none;overflow:auto;font-size:12px;color:#d1d5db}.log div{padding:4px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.modalbg{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:18px;background:radial-gradient(circle at center,rgba(214,173,85,.18),rgba(0,0,0,.92) 58%)}
+.modal{width:min(820px,100%);max-height:94vh;overflow:auto;background:linear-gradient(160deg,#15151e,#07070a);border:1px solid rgba(214,173,85,.38);border-radius:26px;padding:20px;box-shadow:0 30px 100px rgba(0,0,0,.72),0 0 50px rgba(214,173,85,.13)}
+.select{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0}.card{border:1px solid rgba(214,173,85,.22);border-radius:16px;background:rgba(255,255,255,.045);padding:10px;cursor:pointer;text-align:center;transition:transform .14s ease,background .14s ease,border-color .14s ease;font-family:Arial,Helvetica,sans-serif}
+.card:hover,.chosen{transform:translateY(-2px);background:rgba(214,173,85,.16);border-color:#d6ad55}.ico{display:block;margin:auto auto 6px;width:62px;height:62px}.ico svg{width:62px;height:62px}.hide{display:none!important}
+.finalOverlay{position:fixed;inset:0;display:none;z-index:300;align-items:center;justify-content:center;background:radial-gradient(circle at center,rgba(214,173,85,.25),rgba(0,0,0,.95) 60%);overflow:hidden}
+.finalCard{position:relative;z-index:2;width:min(780px,92vw);padding:34px;border-radius:30px;background:linear-gradient(160deg,rgba(16,16,23,.96),rgba(37,31,22,.92));border:1px solid rgba(247,228,166,.55);text-align:center;box-shadow:0 0 88px rgba(214,173,85,.24),0 24px 100px rgba(0,0,0,.78)}
+.finalCard h2{font-size:clamp(34px,7vw,78px);margin:0 0 12px;color:#f7e4a6;text-shadow:0 0 22px rgba(214,173,85,.55)}
+.finalCard p{font-family:Arial,Helvetica,sans-serif;font-size:clamp(16px,2.4vw,23px);line-height:1.45}
+.firework{position:absolute;width:4px;height:4px;border-radius:50%;animation:boom 1.35s ease-out forwards;box-shadow:0 0 12px currentColor}
+@keyframes boom{0%{transform:scale(.2);opacity:1}100%{transform:scale(31);opacity:0}}
+@media(max-width:950px){
+ body{padding:6px}.app{height:calc(100vh - 12px);grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr);gap:6px}.board{width:min(96vw,58vh);height:min(96vw,58vh);min-width:260px;min-height:260px;border-width:7px}.side{max-height:calc(42vh - 4px)}h1{font-size:22px}.sub{font-size:12px;margin-bottom:7px}.box{padding:9px;border-radius:17px}.stats{grid-template-columns:repeat(4,1fr);gap:5px;margin:7px 0}.stat{padding:6px}.name{font-size:10px}.val{font-size:18px}.rules,.legend{display:none}.log{font-size:11px}.status{font-size:12px;padding:8px}.buttons{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:620px){
+ .board{width:min(96vw,54vh);height:min(96vw,54vh)}.lab{font-size:7px}.stats{grid-template-columns:repeat(2,1fr)}.side{max-height:42vh}.select{grid-template-columns:repeat(2,1fr)}.ico{width:54px;height:54px}.ico svg{width:54px;height:54px}
+}
+</style>
+</head>
+<body>
+<div id="modal" class="modalbg">
+ <div class="modal">
+  <h1>Выбери тайного врага</h1>
+  <p class="sub">Соперник этого не видит. Тайный персонаж стоит 120 очков, и его съедение сразу завершает игру.</p>
+  <div id="choose" class="select"></div>
+  <button id="start">Начать игру</button>
+ </div>
+</div>
+
+<main class="app">
+ <section class="box">
+  <h1>Твой тайный враг</h1>
+  <p class="sub">Светлые фигуры снизу. Твой тайный персонаж отмечен золотым ромбом только для тебя.</p>
+  <div id="board" class="board"></div>
+ </section>
+ <aside class="box side">
+  <div id="status" class="status">Выбери тайного персонажа.</div>
+  <div class="stats">
+   <div class="stat"><div class="name">Очки игрока</div><div id="hs" class="val">0</div></div>
+   <div class="stat"><div class="name">Очки ИИ</div><div id="as" class="val">0</div></div>
+   <div class="stat"><div class="name">Фигуры игрока</div><div id="hc" class="val">16</div></div>
+   <div class="stat"><div class="name">Фигуры ИИ</div><div id="ac" class="val">16</div></div>
+  </div>
+  <div class="buttons"><button id="new">Новая игра</button><button id="rev" class="sec">Показать мой секрет</button></div>
+  <div class="rules"><h2>Правила</h2><ul>
+   <li>Доска 8×8. Соперники стоят на противоположных краях.</li>
+   <li>Первый ряд: Спящий, Маг, Красотка, Боец, Мудрец, Искатель, Предатель, Творец.</li>
+   <li>Второй ряд — драконы.</li>
+   <li>Дракон ходит и ест фигуры соперника по всем направлениям на 1 клетку.</li>
+   <li>Персонаж ходит и ест фигуры соперника по всем направлениям на 1 или 2 клетки, если путь свободен.</li>
+   <li>Очки: дракон — 5, обычный персонаж — 10, тайный персонаж — 120.</li>
+   <li>Победа: съесть тайного персонажа соперника.</li>
+   <li>Победа прорывом: если все оставшиеся фигуры игрока достигли противоположной стороны доски, игрок получает 120 очков и выигрывает.</li>
+  </ul></div>
+  <div class="legend"><h2>Фигуры</h2><div id="legend" class="grid"></div></div>
+  <div id="log" class="log"></div>
+ </aside>
+</main>
+
+<div id="finalOverlay" class="finalOverlay">
+ <div class="finalCard">
+  <h2 id="finalTitle">Победа!</h2>
+  <p id="finalText"></p>
+  <button id="closeFinal">Закрыть</button>
+ </div>
+</div>
+
+<script>
+const N=8,H="H",A="A",D="dragon";
+const types=[
+ {id:"sleeper",n:"Спящий",i:"💤"},{id:"mage",n:"Маг",i:"🔮"},{id:"beauty",n:"Красотка",i:"❤️"},{id:"fighter",n:"Боец",i:"⚔️"},
+ {id:"sage",n:"Мудрец",i:"📜"},{id:"seeker",n:"Искатель",i:"🔍"},{id:"traitor",n:"Предатель",i:"☠️"},{id:"creator",n:"Творец",i:"✨"}
+];
+let b=[],sel=null,legal=[],turn=H,over=false,moveNo=1,hSecret="sleeper",aSecret="sleeper",choice="sleeper",reveal=false,hScore=0,aScore=0;
+const $=id=>document.getElementById(id);
+const board=$("board"),status=$("status"),log=$("log");
+
+function name(t){return t===D?"Дракон":types.find(x=>x.id===t)?.n||t}
+function opp(o){return o===H?A:H}
+function inb(r,c){return r>=0&&r<N&&c>=0&&c<N}
+function coord(r,c){return String.fromCharCode(97+c)+(8-r)}
+function piece(o,t){return {o,t}}
+function empty(){return Array.from({length:N},()=>Array(N).fill(null))}
+function val(p){if(!p)return 0;if(p.t===D)return 5;return p.t===(p.o===H?hSecret:aSecret)?120:10}
+function count(o){let n=0;for(let r=0;r<N;r++)for(let c=0;c<N;c++)if(b[r][c]?.o===o)n++;return n}
+
+function fig(t,o=H){
+ const ai=o===A, edge=ai?"#12070a":"#f7e4a6", hi=ai?"#ef4444":"#93c5fd", gold="#f7e4a6";
+ const fill={dragon:ai?"#4b0d13":"#a34216",sleeper:ai?"#2d1647":"#5b3aa1",mage:ai?"#361469":"#7450b8",beauty:ai?"#5f1236":"#b83272",fighter:ai?"#611313":"#9f1f1f",sage:ai?"#15364b":"#26718a",seeker:ai?"#173b2a":"#2c7d4f",traitor:ai?"#151720":"#4b5563",creator:ai?"#113c38":"#17877d"}[t]||"#777";
+ if(t===D)return `<svg class="figsvg" viewBox="0 0 100 100">
+ <defs>
+  <radialGradient id="dragonFace${o}" cx="50%" cy="32%" r="72%">
+   <stop offset="0" stop-color="#fed7aa"/>
+   <stop offset=".28" stop-color="${fill}"/>
+   <stop offset=".72" stop-color="#26060a"/>
+   <stop offset="1" stop-color="#050204"/>
+  </radialGradient>
+  <linearGradient id="horn${o}" x1="0" x2="0" y1="0" y2="1">
+   <stop offset="0" stop-color="#fff7cc"/>
+   <stop offset=".55" stop-color="${gold}"/>
+   <stop offset="1" stop-color="#7c4f16"/>
+  </linearGradient>
+ </defs>
+
+ <path d="M50 8
+          C59 16 63 25 64 34
+          C76 30 86 34 92 45
+          C81 43 76 47 75 56
+          C72 78 60 90 50 94
+          C40 90 28 78 25 56
+          C24 47 19 43 8 45
+          C14 34 24 30 36 34
+          C37 25 41 16 50 8 Z"
+       fill="url(#dragonFace${o})" stroke="${edge}" stroke-width="3.6"/>
+
+ <path d="M35 35 L21 9 L44 27 Z" fill="url(#horn${o})" stroke="${edge}" stroke-width="2.7"/>
+ <path d="M65 35 L79 9 L56 27 Z" fill="url(#horn${o})" stroke="${edge}" stroke-width="2.7"/>
+
+ <path d="M27 45 L12 31 L33 37 Z" fill="${fill}" stroke="${edge}" stroke-width="2.5"/>
+ <path d="M73 45 L88 31 L67 37 Z" fill="${fill}" stroke="${edge}" stroke-width="2.5"/>
+
+ <path d="M36 48 C40 42 46 42 49 48" fill="none" stroke="${gold}" stroke-width="3" stroke-linecap="round"/>
+ <path d="M64 48 C60 42 54 42 51 48" fill="none" stroke="${gold}" stroke-width="3" stroke-linecap="round"/>
+
+ <ellipse cx="39" cy="52" rx="5.5" ry="4.2" fill="#09090e" stroke="${gold}" stroke-width="2"/>
+ <ellipse cx="61" cy="52" rx="5.5" ry="4.2" fill="#09090e" stroke="${gold}" stroke-width="2"/>
+ <circle cx="39" cy="52" r="2.2" fill="${hi}"/>
+ <circle cx="61" cy="52" r="2.2" fill="${hi}"/>
+
+ <path d="M50 45 C46 56 44 63 50 70 C56 63 54 56 50 45 Z" fill="#16070a" stroke="${edge}" stroke-width="2.4"/>
+ <path d="M39 72 C44 78 56 78 61 72" fill="none" stroke="${gold}" stroke-width="4" stroke-linecap="round"/>
+ <path d="M42 73 L39 82 M48 76 L47 86 M52 76 L53 86 M58 73 L61 82" stroke="#fff7cc" stroke-width="2.4" stroke-linecap="round"/>
+
+ <path d="M29 59 C36 62 42 64 49 68" fill="none" stroke="${edge}" stroke-width="2.5" stroke-linecap="round"/>
+ <path d="M71 59 C64 62 58 64 51 68" fill="none" stroke="${edge}" stroke-width="2.5" stroke-linecap="round"/>
+
+ <path d="M24 55 C31 53 35 57 36 64" fill="none" stroke="${gold}" stroke-width="2" opacity=".85"/>
+ <path d="M76 55 C69 53 65 57 64 64" fill="none" stroke="${gold}" stroke-width="2" opacity=".85"/>
+ </svg>`;
+ if(t==="sleeper")return `<svg class="figsvg" viewBox="0 0 100 100"><path d="M27 82 C19 58 22 31 43 20 C47 17 53 17 57 20 C78 31 81 58 73 82 C59 90 41 90 27 82 Z" fill="${fill}" stroke="${edge}" stroke-width="4"/><path d="M35 57 Q43 66 50 57 Q57 66 65 57" fill="none" stroke="${gold}" stroke-width="5" stroke-linecap="round"/><path d="M31 31 C43 39 57 39 69 31" fill="none" stroke="${edge}" stroke-width="4"/><text x="60" y="30" font-size="22" font-weight="900" fill="${gold}">Z</text></svg>`;
+ if(t==="mage")return `<svg class="figsvg" viewBox="0 0 100 100"><path d="M50 9 L62 39 L93 39 L68 58 L77 89 L50 71 L23 89 L32 58 L7 39 L38 39 Z" fill="${fill}" stroke="${edge}" stroke-width="4"/><circle cx="50" cy="52" r="14" fill="#08080d" stroke="${gold}" stroke-width="5"/><path d="M50 28 V76 M26 52 H74" stroke="${gold}" stroke-width="3.5" stroke-linecap="round"/><circle cx="50" cy="52" r="5" fill="${hi}"/></svg>`;
+ if(t==="beauty")return `<svg class="figsvg" viewBox="0 0 100 100"><path d="M50 87 C16 62 22 23 45 33 C50 35 50 44 50 44 C50 44 50 35 55 33 C78 23 84 62 50 87 Z" fill="${fill}" stroke="${edge}" stroke-width="4"/><path d="M33 59 Q50 73 67 59" fill="none" stroke="${gold}" stroke-width="4" stroke-linecap="round"/><circle cx="50" cy="50" r="8" fill="${gold}"/></svg>`;
+ if(t==="fighter")return `<svg class="figsvg" viewBox="0 0 100 100"><path d="M50 8 L84 80 L50 93 L16 80 Z" fill="${fill}" stroke="${edge}" stroke-width="4"/><path d="M35 56 L65 56 M50 24 L50 83" stroke="${gold}" stroke-width="8" stroke-linecap="round"/><circle cx="50" cy="42" r="11" fill="#09090e" stroke="${edge}" stroke-width="3"/><path d="M28 80 Q50 70 72 80" fill="none" stroke="${gold}" stroke-width="4"/></svg>`;
+ if(t==="sage")return `<svg class="figsvg" viewBox="0 0 100 100"><path d="M24 18 H76 V84 H24 Z" fill="${fill}" stroke="${edge}" stroke-width="4"/><path d="M33 35 H67 M33 50 H67 M33 65 H59" stroke="${gold}" stroke-width="5" stroke-linecap="round"/><path d="M72 13 L85 27 L64 48 L54 51 L58 40 Z" fill="${gold}" stroke="${edge}" stroke-width="2"/></svg>`;
+ if(t==="seeker")return `<svg class="figsvg" viewBox="0 0 100 100"><circle cx="42" cy="42" r="28" fill="${fill}" stroke="${edge}" stroke-width="4"/><circle cx="42" cy="42" r="12" fill="none" stroke="${gold}" stroke-width="6"/><path d="M62 62 L84 84" stroke="${gold}" stroke-width="10" stroke-linecap="round"/><circle cx="42" cy="42" r="5" fill="${hi}"/></svg>`;
+ if(t==="traitor")return `<svg class="figsvg" viewBox="0 0 100 100"><path d="M50 9 C72 21 83 39 78 62 C74 80 59 89 50 93 C41 89 26 80 22 62 C17 39 28 21 50 9 Z" fill="${fill}" stroke="${edge}" stroke-width="4"/><path d="M34 42 Q50 31 66 42 M34 64 Q50 75 66 64" fill="none" stroke="${gold}" stroke-width="5" stroke-linecap="round"/><path d="M50 26 V80" stroke="${hi}" stroke-width="4" stroke-dasharray="6 5"/></svg>`;
+ if(t==="creator")return `<svg class="figsvg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="35" fill="${fill}" stroke="${edge}" stroke-width="4"/><path d="M50 18 V82 M18 50 H82" stroke="${gold}" stroke-width="8" stroke-linecap="round"/><path d="M28 28 L72 72 M72 28 L28 72" stroke="${edge}" stroke-width="3" stroke-linecap="round"/><circle cx="50" cy="50" r="12" fill="#09090e" stroke="${gold}" stroke-width="4"/></svg>`;
+ return "?";
+}
+
+function setup(){
+ $("choose").innerHTML="";
+ $("legend").innerHTML="";
+ types.forEach(t=>{
+  const card=document.createElement("div");
+  card.className="card"+(choice===t.id?" chosen":"");
+  card.innerHTML=`<span class="ico">${fig(t.id,H)}</span><strong>${t.n}</strong><br><small>персонаж: 10 / тайный: 120</small>`;
+  card.onclick=()=>{choice=t.id;setup()};
+  $("choose").appendChild(card);
+
+  const it=document.createElement("div");
+  it.className="item";
+  it.innerHTML=`${fig(t.id,H)} <strong>${t.n}</strong><br><small>персонаж</small>`;
+  $("legend").appendChild(it);
+ });
+ const d=document.createElement("div");
+ d.className="item";
+ d.innerHTML=`${fig(D,H)} <strong>Дракон</strong><br><small>5 очков</small>`;
+ $("legend").appendChild(d);
+}
+
+function init(){
+ b=empty();sel=null;legal=[];turn=H;over=false;moveNo=1;reveal=false;hScore=0;aScore=0;
+ hSecret=choice;
+ aSecret=types[Math.floor(Math.random()*types.length)].id;
+ log.innerHTML="";
+ for(let c=0;c<N;c++){
+  b[0][c]=piece(A,types[c].id);
+  b[1][c]=piece(A,D);
+  b[6][c]=piece(H,D);
+  b[7][c]=piece(H,types[c].id);
+ }
+ $("modal").classList.add("hide");
+ $("finalOverlay").style.display="none";
+ addLog("Новая партия. Твой тайный персонаж: "+name(hSecret)+".");
+ msg("Ход игрока. Выбери светлую фигуру.");
+ draw();
+}
+
+function pathClear(r,c,nr,nc){
+ const steps=Math.max(Math.abs(nr-r),Math.abs(nc-c));
+ if(steps<=1)return true;
+ const dr=Math.sign(nr-r),dc=Math.sign(nc-c);
+ for(let s=1;s<steps;s++) if(b[r+dr*s][c+dc*s]!==null)return false;
+ return true;
+}
+
+function moves(r,c){
+ const p=b[r][c]; if(!p)return [];
+ const m=[],e=opp(p.o);
+ const dirs=[[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+ const maxStep=p.t===D?1:2;
+ dirs.forEach(([dr,dc])=>{
+  for(let step=1;step<=maxStep;step++){
+   const nr=r+dr*step,nc=c+dc*step;
+   if(!inb(nr,nc))continue;
+   if(!pathClear(r,c,nr,nc))continue;
+   if(b[nr][nc]===null)m.push({fr:r,fc:c,tr:nr,tc:nc,cap:false});
+   else if(b[nr][nc].o===e)m.push({fr:r,fc:c,tr:nr,tc:nc,cap:true});
+  }
+ });
+ return m;
+}
+
+function allMoves(o){
+ const out=[];
+ for(let r=0;r<N;r++)for(let c=0;c<N;c++)if(b[r][c]?.o===o)out.push(...moves(r,c));
+ return out;
+}
+
+function allOnOppositeSide(o){
+ const goal=o===H?0:7;
+ let total=0,onGoal=0;
+ for(let r=0;r<N;r++)for(let c=0;c<N;c++){
+  if(b[r][c]?.o===o){total++; if(r===goal)onGoal++}
+ }
+ return total>0&&total===onGoal;
+}
+
+function doMove(m){
+ const p=b[m.fr][m.fc],t=b[m.tr][m.tc],v=val(t);
+ const secret=t&&t.t===(t.o===H?hSecret:aSecret);
+ b[m.tr][m.tc]=p;b[m.fr][m.fc]=null;
+ if(t){if(p.o===H)hScore+=v;else aScore+=v}
+ addLog(`${moveNo}. ${p.o===H?"Игрок":"ИИ"}: ${coord(m.fr,m.fc)} → ${coord(m.tr,m.tc)} — ${t?`съел ${name(t.t)} за ${v}`:"сходил"}`);
+ if(p.o===A)moveNo++;
+ sel=null;legal=[];draw();
+ if(secret){
+  end(p.o,p.o===H?`Ты съел тайного персонажа ИИ: ${name(aSecret)}.`:`ИИ съел твоего тайного персонажа: ${name(hSecret)}.`);
+  return;
+ }
+ if(allOnOppositeSide(p.o)){
+  if(p.o===H)hScore+=120;else aScore+=120;
+  draw();
+  end(p.o,(p.o===H?"Все твои оставшиеся фигуры":"Все фигуры ИИ")+" достигли противоположной стороны доски. Начислено 120 очков.");
+  return;
+ }
+ const nx=opp(p.o);
+ if(!allMoves(nx).length){
+  end(hScore>=aScore?H:A,"У соперника нет ходов. Победа по текущему счёту.");
+  return;
+ }
+ turn=nx;
+ if(turn===H)msg("Ход игрока. Выбери светлую фигуру.");
+ else{msg("ИИ думает...");setTimeout(ai,280)}
+}
+
+function clone(){return b.map(row=>row.map(p=>p?{...p}:null))}
+function tmp(m,fn){
+ const ob=b,oh=hScore,oa=aScore;
+ b=clone();
+ const p=b[m.fr][m.fc],t=b[m.tr][m.tc],v=val(t);
+ b[m.tr][m.tc]=p;b[m.fr][m.fc]=null;
+ if(t){if(p.o===H)hScore+=v;else aScore+=v}
+ const r=fn();
+ b=ob;hScore=oh;aScore=oa;
+ return r;
+}
+function evalBoard(){
+ let s=(aScore-hScore)*12+(count(A)-count(H))*8;
+ for(let r=0;r<N;r++)for(let c=0;c<N;c++){
+  const p=b[r][c]; if(!p)continue;
+  const prog=p.o===A?r:7-r;
+  s+=p.o===A?prog*2:-prog*2;
+  if(p.o===A&&p.t===aSecret)s+=120;
+  if(p.o===H&&p.t===hSecret)s-=120;
+ }
+ return s;
+}
+function ai(){
+ if(over)return;
+ const ms=allMoves(A);
+ if(!ms.length){end(H,"У ИИ нет ходов.");return}
+ for(const m of ms){
+  const t=b[m.tr][m.tc];
+  if(t?.o===H&&t.t===hSecret){doMove(m);return}
+ }
+ let best=ms[0],bs=-1e9;
+ for(const m of ms){
+  const s=tmp(m,()=>{
+   let z=evalBoard();
+   for(const r of allMoves(H)){
+    const victim=b[r.tr][r.tc];
+    if(r.cap&&victim?.o===A)z-=val(victim)*14;
+   }
+   return z+Math.random()*4;
+  });
+  if(s>bs){bs=s;best=m}
+ }
+ doMove(best);
+}
+
+function clickCell(r,c){
+ if(over||turn!==H)return;
+ if(sel){
+  const m=legal.find(x=>x.tr===r&&x.tc===c);
+  if(m){doMove(m);return}
+ }
+ if(b[r][c]?.o===H){
+  sel={r,c};legal=moves(r,c);
+  msg(legal.length?"Выбери подсвеченную клетку.":"У этой фигуры нет доступных ходов.");
+  draw();
+ }else{
+  sel=null;legal=[];
+  msg("Выбери свою светлую фигуру.");
+  draw();
+ }
+}
+
+function draw(){
+ board.innerHTML="";
+ for(let r=0;r<N;r++)for(let c=0;c<N;c++){
+  const cell=document.createElement("div");
+  cell.className="cell "+((r+c)%2?"dark":"light");
+  if(sel&&sel.r===r&&sel.c===c)cell.classList.add("sel");
+  const l=legal.find(x=>x.tr===r&&x.tc===c);
+  if(l)cell.classList.add(l.cap?"cap":"mv");
+  const p=b[r]?.[c];
+  if(p){
+   const isS=p.o===H&&p.t===hSecret;
+   const aiS=p.o===A&&over&&p.t===aSecret;
+   const pc=document.createElement("div");
+   pc.className=`piece ${p.o===H?"human":"ai"} ${(isS||aiS)?"secret":""}`;
+   pc.innerHTML=`${fig(p.t,p.o)}`;
+   cell.appendChild(pc);
+  }
+  cell.onclick=()=>clickCell(r,c);
+  board.appendChild(cell);
+ }
+ $("hs").textContent=hScore;
+ $("as").textContent=aScore;
+ $("hc").textContent=count(H);
+ $("ac").textContent=count(A);
+}
+
+function playWinSound(){
+ try{
+  const ctx=new (window.AudioContext||window.webkitAudioContext)();
+  const notes=[261.63,329.63,392,523.25,659.25,783.99];
+  notes.forEach((f,i)=>{
+   const o=ctx.createOscillator(),g=ctx.createGain();
+   o.type=i%2?"triangle":"sawtooth";o.frequency.value=f;
+   g.gain.setValueAtTime(0,ctx.currentTime+i*.11);
+   g.gain.linearRampToValueAtTime(.12,ctx.currentTime+i*.11+.03);
+   g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+i*.11+.38);
+   o.connect(g);g.connect(ctx.destination);o.start(ctx.currentTime+i*.11);o.stop(ctx.currentTime+i*.11+.42);
+  });
+ }catch(e){}
+}
+function fireworks(){
+ const ov=$("finalOverlay");
+ ov.querySelectorAll(".firework").forEach(x=>x.remove());
+ for(let i=0;i<34;i++){
+  const f=document.createElement("div");
+  f.className="firework";
+  f.style.left=(8+Math.random()*84)+"%";
+  f.style.top=(8+Math.random()*76)+"%";
+  f.style.color=["#facc15","#ef4444","#a855f7","#22c55e","#38bdf8"][Math.floor(Math.random()*5)];
+  f.style.animationDelay=(Math.random()*.8)+"s";
+  ov.appendChild(f);
+  setTimeout(()=>f.remove(),2200);
+ }
+}
+function showFinal(w,why){
+ $("finalTitle").textContent=w===H?"Победа игрока!":"Победа ИИ!";
+ $("finalText").innerHTML=why+"<br><br>Счёт: игрок "+hScore+", ИИ "+aScore+".<br>Твой тайный персонаж: <strong>"+name(hSecret)+"</strong>.<br>Тайный персонаж ИИ: <strong>"+name(aSecret)+"</strong>.";
+ $("finalOverlay").style.display="flex";
+ playWinSound();fireworks();
+}
+function end(w,why){
+ over=true;reveal=true;draw();
+ msg(`<strong>${w===H?"Победа игрока!":"Победа ИИ!"}</strong><br>${why}<br>Счёт: игрок ${hScore}, ИИ ${aScore}.<br>Твой тайный персонаж: ${name(hSecret)}. Тайный персонаж ИИ: ${name(aSecret)}.`);
+ addLog((w===H?"Победа игрока! ":"Победа ИИ! ")+why);
+ showFinal(w,why);
+}
+function msg(x){status.innerHTML=x}
+function addLog(x){const d=document.createElement("div");d.textContent=x;log.prepend(d)}
+
+$("start").onclick=init;
+$("new").onclick=()=>{$("modal").classList.remove("hide");over=true;msg("Выбери тайного персонажа.")};
+$("rev").onclick=()=>{
+ reveal=!reveal;
+ $("rev").textContent=reveal?"Скрыть мой секрет":"Показать мой секрет";
+ if(reveal)msg(`Твой тайный персонаж: <strong>${name(hSecret)}</strong>. Тайный персонаж ИИ скрыт до конца партии.`);
+ else if(!over)msg(turn===H?"Ход игрока. Выбери светлую фигуру.":"ИИ думает...");
+ draw();
+};
+$("closeFinal").onclick=()=>$("finalOverlay").style.display="none";
+
+setup();
+draw();
+</script>
+</body>
+</html>
