@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Your Secret Enemy</title>
+<title>Твой тайный враг</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
 <style>
@@ -188,7 +188,7 @@ h2{
 .val{font-family:'Cinzel',serif;font-size:22px;font-weight:700;margin-top:2px;color:var(--gold2)}
 
 /* ── BUTTONS ── */
-.buttons{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.buttons{display:grid;grid-template-columns:1fr;gap:7px}
 button{
   border:1px solid rgba(240,214,138,.32);
   border-radius:13px;padding:10px 12px;
@@ -358,7 +358,6 @@ button:active{transform:translateY(0)}
   </div>
   <div class="buttons">
    <button id="new" onclick="newGame()">New Game</button>
-   <button id="rev" class="sec" onclick="toggleReveal()">Reveal My Secret</button>
   </div>
   <div class="rules" id="rulesBox">
    <h2 id="rulesTitle">Rules</h2>
@@ -465,7 +464,7 @@ const LANGS={
  }
 };
 
-let lang="en";
+let lang="ru";
 function L(){return LANGS[lang]}
 function t(key){return L()[key]||key}
 
@@ -483,7 +482,6 @@ function applyLang(){
  document.getElementById("lPlayerPieces").textContent=l.playerPieces;
  document.getElementById("lAiPieces").textContent=l.aiPieces;
  document.getElementById("new").textContent=l.newGame;
- document.getElementById("rev").textContent=reveal?l.hideSecret:l.revealSecret;
  document.getElementById("rulesTitle").textContent=l.rulesTitle;
  const ul=document.getElementById("rulesList");
  ul.innerHTML="";
@@ -551,7 +549,7 @@ function setup(){
 }
 
 function init(){
- b=empty();sel=null;legal=[];turn=H;over=false;moveNo=1;reveal=false;hScore=0;aScore=0;
+ b=empty();sel=null;legal=[];turn=H;over=false;moveNo=1;hScore=0;aScore=0;
  hSecret=choice;
  aSecret=types[Math.floor(Math.random()*types.length)].id;
  log.innerHTML="";
@@ -561,7 +559,6 @@ function init(){
  }
  $("modal").classList.add("hide");
  $("finalOverlay").style.display="none";
- $("rev").textContent=L().revealSecret;
  addLog(L().newPartySuffix+" "+name(hSecret)+".");
  msg(L().statusPickPiece);
  draw();
@@ -688,7 +685,7 @@ function draw(){
   if(l)cell.classList.add(l.cap?"cap":"mv");
   const p=b[r]?.[c];
   if(p){
-   const isS=(p.o===H&&p.t===hSecret&&reveal)||(p.o===A&&over&&p.t===aSecret);
+   const isS=(p.o===H&&p.t===hSecret)||(p.o===A&&over&&p.t===aSecret);
    const pc=document.createElement("div");
    pc.className=`piece ${p.o===H?"human":"ai"}${isS?" secret":""}`;
    pc.innerHTML=fig(p.t,p.o);
@@ -745,13 +742,6 @@ function msg(x){status.innerHTML=x}
 function addLog(x){const d=document.createElement("div");d.textContent=x;log.prepend(d)}
 
 function newGame(){$("modal").classList.remove("hide");over=true;msg(L().statusChoose)}
-function toggleReveal(){
- reveal=!reveal;
- $("rev").textContent=reveal?L().hideSecret:L().revealSecret;
- if(reveal)msg(L().revealMsg.replace("{h}",name(hSecret)));
- else if(!over)msg(turn===H?L().statusPickPiece:L().statusAiThinks);
- draw();
-}
 
 /* init */
 $("start").onclick=init;
